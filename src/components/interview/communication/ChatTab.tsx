@@ -1,10 +1,11 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Send, Paperclip, Smile, Search, MoreHorizontal } from 'lucide-react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: number;
@@ -23,84 +24,74 @@ interface ChatTabProps {
   onUnreadChange: (count: number) => void;
 }
 
+function useChatMessages(roomId: string) {
+  const [messages, setMessages] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!roomId) return;
+    let subscription: any;
+    setLoading(true);
+    // Fetch initial messages
+    supabase
+      .from('messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('timestamp', { ascending: true })
+      .then(({ data }) => {
+        setMessages(data || []);
+        setLoading(false);
+      });
+    // Subscribe to new messages
+    subscription = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${roomId}` },
+        (payload) => {
+          setMessages((msgs) => [...msgs, payload.new]);
+        }
+      )
+      .subscribe();
+    return () => {
+      if (subscription) supabase.removeChannel(subscription);
+    };
+  }, [roomId]);
+
+  const sendMessage = async (msg: { sender: string; role: string; content: string; avatar?: string; type?: string; fileName?: string; }) => {
+    await supabase.from('messages').insert({
+      room_id: roomId,
+      sender: msg.sender,
+      role: msg.role,
+      content: msg.content,
+      avatar: msg.avatar || '/placeholder.svg',
+      type: msg.type || 'text',
+      file_name: msg.fileName || null,
+      timestamp: new Date().toISOString(),
+      status: 'sent',
+    });
+  };
+
+  return { messages, loading, sendMessage };
+}
+
 export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
   const [message, setMessage] = React.useState('');
   const [isTyping, setIsTyping] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
-  
-  const [messages, setMessages] = React.useState<Message[]>([
-    {
-      id: 1,
-      sender: 'John Doe',
-      avatar: '/placeholder.svg',
-      role: 'interviewer',
-      message: 'Welcome to the interview! Please feel free to ask any questions during our session.',
-      timestamp: '10:30 AM',
-      status: 'read',
-      type: 'text'
-    },
-    {
-      id: 2,
-      sender: 'Sarah Chen',
-      avatar: '/placeholder.svg',
-      role: 'candidate',
-      message: 'Thank you! I\'m excited to get started. Should I begin with the coding challenge?',
-      timestamp: '10:31 AM',
-      status: 'read',
-      type: 'text'
-    },
-    {
-      id: 3,
-      sender: 'John Doe',
-      avatar: '/placeholder.svg',
-      role: 'interviewer',
-      message: 'Yes, please take a look at the Two Sum problem in the code editor. Let me know if you have any questions about the requirements.',
-      timestamp: '10:32 AM',
-      status: 'read',
-      type: 'text'
-    },
-    {
-      id: 4,
-      sender: 'Sarah Chen',
-      avatar: '/placeholder.svg',
-      role: 'candidate',
-      message: 'solution.py',
-      timestamp: '10:45 AM',
-      status: 'delivered',
-      type: 'file',
-      fileName: 'solution.py'
-    },
-    {
-      id: 5,
-      sender: 'John Doe',
-      avatar: '/placeholder.svg',
-      role: 'interviewer',
-      message: 'Great approach! I can see you\'re using a hashmap for O(n) time complexity.',
-      timestamp: '10:46 AM',
-      status: 'sent',
-      type: 'text',
-      reactions: ['👍', '💡']
-    }
-  ]);
+  const { roomId } = useParams();
+  const [searchParams] = useSearchParams();
+  const interviewId = searchParams.get('id');
+  const chatRoomId = roomId || (interviewId ? `interview-chat-${interviewId}` : 'shared-interview-chat-fixed');
+  const { messages, loading, sendMessage } = useChatMessages(chatRoomId);
 
-  const sendMessage = () => {
+  const handleSend = async () => {
     if (message.trim()) {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        sender: 'John Doe',
-        avatar: '/placeholder.svg',
-        role: 'interviewer',
-        message: message.trim(),
-        timestamp: new Date().toLocaleTimeString('en-US', { 
-          hour12: true, 
-          hour: 'numeric', 
-          minute: '2-digit' 
-        }),
-        status: 'sent',
-        type: 'text'
-      };
-      
-      setMessages([...messages, newMessage]);
+      await sendMessage({
+        sender: 'John Doe', // TODO: Replace with actual user
+        role: 'interviewer', // TODO: Replace with actual role
+        content: message.trim(),
+      });
       setMessage('');
       onUnreadChange(0);
     }
@@ -121,8 +112,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
   };
 
   const filteredMessages = messages.filter(msg =>
-    msg.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    msg.sender.toLowerCase().includes(searchQuery.toLowerCase())
+    (msg.content || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (msg.sender || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -154,10 +145,9 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
                   <Avatar className="w-8 h-8">
                     <AvatarImage src={msg.avatar} />
                     <AvatarFallback className="bg-tech-green text-dark-primary text-xs">
-                      {msg.sender.split(' ').map(n => n[0]).join('')}
+                      {msg.sender?.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <span className="text-tech-green font-medium text-sm">{msg.sender}</span>
@@ -167,9 +157,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
                       >
                         {msg.role === 'interviewer' ? 'Interviewer' : 'Candidate'}
                       </Badge>
-                      <span className="text-text-secondary text-xs">{msg.timestamp}</span>
+                      <span className="text-text-secondary text-xs">{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                     </div>
-                    
                     <div className={`p-3 rounded-lg ${
                       msg.role === 'interviewer' 
                         ? 'bg-tech-green/20 text-white' 
@@ -178,23 +167,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
                       {msg.type === 'file' ? (
                         <div className="flex items-center space-x-2">
                           <Paperclip className="w-4 h-4" />
-                          <span className="text-tech-green font-medium">{msg.fileName}</span>
+                          <span className="text-tech-green font-medium">{msg.file_name}</span>
                         </div>
                       ) : (
-                        <p className="text-sm">{msg.message}</p>
-                      )}
-                      
-                      {msg.reactions && msg.reactions.length > 0 && (
-                        <div className="flex items-center space-x-1 mt-2">
-                          {msg.reactions.map((reaction, index) => (
-                            <span key={index} className="text-sm bg-dark-primary px-2 py-1 rounded">
-                              {reaction}
-                            </span>
-                          ))}
-                        </div>
+                        <p className="text-sm">{msg.content}</p>
                       )}
                     </div>
-                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className={`text-xs ${
@@ -209,7 +187,6 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
               </div>
             </div>
           ))}
-          
           {isTyping && (
             <div className="flex items-start space-x-3">
               <Avatar className="w-8 h-8">
@@ -238,7 +215,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
                 setMessage(e.target.value);
                 handleTyping();
               }}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Type a message... (Use @ to mention)"
               className="w-full bg-dark-primary border border-border-dark rounded px-3 py-2 pr-20 text-white text-sm focus:outline-none focus:border-tech-green"
             />
@@ -253,13 +230,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({ onUnreadChange }) => {
           </div>
           <Button 
             size="sm" 
-            onClick={sendMessage} 
+            onClick={handleSend} 
             className="bg-tech-green hover:bg-tech-green/80 text-dark-primary px-4"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        
         <div className="text-xs text-text-secondary">
           <span className="font-medium">Shortcuts:</span> Ctrl+Enter to send, @ to mention, /code for code block
         </div>

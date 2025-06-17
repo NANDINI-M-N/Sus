@@ -49,7 +49,7 @@ const Footer = () => {
                 <Leaf className="h-5 w-5 text-emerald-green" />
               </div>
               <div className="flex flex-col">
-                <span className="text-white font-bold text-xl">CodeGreen</span>
+                <span className="text-white font-bold text-xl">CodeSignal</span>
                 <span className="text-xs text-text-secondary -mt-1">Technical Interviews</span>
               </div>
             </div>
@@ -156,7 +156,7 @@ const Footer = () => {
         <div className="border-t border-border-dark mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-text-secondary text-sm mb-4 md:mb-0">
-              © 2024 CodeGreen. All rights reserved.
+              © 2024 CodeSignal. All rights reserved.
             </div>
             <div className="flex items-center space-x-6">
               <a href="#" className="text-text-secondary hover:text-emerald-green text-sm transition-colors">

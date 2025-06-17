@@ -80,7 +80,7 @@ const Header = () => {
               }`} />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-white">CodeGreen</span>
+              <span className="text-xl font-bold text-white">CodeSignal</span>
               <span className="text-xs text-text-secondary -mt-1">Technical Interviews</span>
             </div>
           </Link>

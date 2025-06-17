@@ -121,7 +121,7 @@ const Features = () => {
             <p className="text-text-secondary mb-6">Join hundreds of companies already using our platform.</p>
             <div className="inline-flex items-center gap-2 bg-dark-secondary px-4 py-2 rounded-md border border-border-dark">
               <span className="text-emerald-green font-mono">$</span>
-              <span className="text-text-secondary">npm install codegreen-success</span>
+              <span className="text-text-secondary">npm install codesignal-success</span>
             </div>
           </div>
         </div>

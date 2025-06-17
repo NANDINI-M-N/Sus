@@ -64,6 +64,19 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
       error: error?.substring(0, 100) + (error?.length > 100 ? '...' : '')
     });
     
+    // Check if this is a model-related error and format it nicely
+    if (error.includes('Model not found') || error.includes('OpenAI API error')) {
+      return (
+        <div className="bg-red-950/30 p-3 rounded border border-red-600/50">
+          <h5 className="text-red-400 font-medium mb-2">AI Execution Error</h5>
+          <p className="text-red-300 mb-2">{error}</p>
+          <p className="text-xs text-red-400/70">
+            The AI code execution engine encountered an error. Please try again in a few moments or contact support if the issue persists.
+          </p>
+        </div>
+      );
+    }
+    
     return <pre className="text-red-400 whitespace-pre-wrap">{error}</pre>;
   };
 

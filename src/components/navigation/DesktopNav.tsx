@@ -9,9 +9,8 @@ import {
   Settings, 
   Code, 
   Video, 
-  MessageSquare, 
+  FileText, 
   Brain,
-  FileText,
   Search,
   User,
   Loader2
@@ -66,9 +65,8 @@ const DesktopNav: React.FC = () => {
   const interviewNavItems = [
     { label: 'Video Call', icon: Video, path: '/interview-room/video' },
     { label: 'Code Editor', icon: Code, path: '/interview-room/code' },
-    { label: 'Chat', icon: MessageSquare, path: '/interview-room/chat' },
-    { label: 'AI Analysis', icon: Brain, path: '/interview-room/analysis' },
-    { label: 'Problem Statement', icon: FileText, path: '/interview-room/problem' },
+    { label: 'Shared Notes', icon: FileText, path: '/interview-room/chat' },
+    { label: 'AI Analysis', icon: Brain, path: '/interview-room/analysis' }
   ];
   
   const isInterviewRoom = location.pathname.includes('interview-room');
@@ -93,9 +91,9 @@ const DesktopNav: React.FC = () => {
       {/* Logo and App Name */}
       <div className="p-4 border-b border-gray-700 flex items-center gap-3">
         <div className="w-8 h-8 rounded-md bg-emerald-green flex items-center justify-center text-gray-900 font-bold">
-          H
+          C
         </div>
-        <span className="text-white text-lg font-semibold">Hacerank</span>
+        <span className="text-white text-lg font-semibold">CodeSignal</span>
       </div>
       
       {/* Search */}

@@ -104,36 +104,55 @@ Your response MUST be valid JSON with this exact structure:
   "visualOutput": string | null // for HTML/CSS or graphical output
 }`;
 
-    const request: OpenAIRequest = {
-      model: 'gpt-4o mini',
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: userContent
-        }
-      ],
-      temperature: 0.1,
-      top_p: 0.95,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-      response_format: { type: 'json_object' }
-    };
-
-    console.log(`📡 Sending request to OpenAI API at ${new Date().toISOString()}`);
+    const requestModels = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    let response;
+    let modelError;
     
-    const response = await axios.post(OPENAI_API_URL, request, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+    // Try each model in sequence until one works
+    for (const model of requestModels) {
+      try {
+        const request: OpenAIRequest = {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: userContent
+            }
+          ],
+          temperature: 0.1,
+          top_p: 0.95,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+          response_format: { type: 'json_object' }
+        };
+
+        console.log(`📡 Sending request to OpenAI API using model ${model} at ${new Date().toISOString()}`);
+        
+        response = await axios.post(OPENAI_API_URL, request, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+          }
+        });
+        
+        console.log(`✅ Received response from OpenAI API after ${((performance.now() - startTime) / 1000).toFixed(2)}s using model ${model}`);
+        break; // If successful, exit the loop
+      } catch (error) {
+        console.log(`⚠️ Failed to use model ${model}: ${error.message}`);
+        modelError = error;
+        // Continue to next model
       }
-    });
-
-    console.log(`✅ Received response from OpenAI API after ${((performance.now() - startTime) / 1000).toFixed(2)}s`);
+    }
     
+    // If all models failed, throw the last error
+    if (!response) {
+      throw modelError || new Error('All OpenAI models failed');
+    }
+
     const result = response.data.choices[0].message.content;
     console.log(`📊 Raw response from OpenAI:\n${result}`);
     
@@ -188,16 +207,29 @@ Your response MUST be valid JSON with this exact structure:
     const totalTime = performance.now() - startTime;
     console.error(`❌ OpenAI API error after ${(totalTime / 1000).toFixed(2)}s:`, error);
     
+    let errorMessage = 'Failed to simulate code execution';
+    
     if (axios.isAxiosError(error)) {
       console.error('API Response:', error.response?.data);
       console.error('API Status:', error.response?.status);
       console.error('API Headers:', error.response?.headers);
+      
+      // Provide more specific error messages based on response
+      if (error.response?.status === 404) {
+        errorMessage = 'Model not found: The specified OpenAI model is invalid or unavailable';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication error: Invalid API key or insufficient permissions';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded: Too many requests to the OpenAI API';
+      } else if (error.response?.data?.error?.message) {
+        errorMessage = `OpenAI API error: ${error.response.data.error.message}`;
+      }
     }
     
     return {
       success: false,
       output: '',
-      error: error instanceof Error ? error.message : 'Failed to simulate code execution',
+      error: errorMessage,
       executionTime: totalTime
     };
   }
