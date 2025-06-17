@@ -35,6 +35,9 @@ export interface FeedbackResult {
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
+// Check if API key is available
+const isApiKeyAvailable = !!OPENAI_API_KEY;
+
 // Core input function
 function createFeedbackInput({ 
   candidateName, 
@@ -137,7 +140,7 @@ async function runFeedbackGenerator(input: FeedbackGeneratorInput): Promise<Feed
     const response = await axios.post(
       OPENAI_API_URL,
       {
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7, // Slightly higher for more natural language variation
         response_format: { type: 'json_object' }
@@ -258,7 +261,14 @@ export async function generateFeedback({
   console.log(`📊 Scores - Technical: ${technicalScore}, Communication: ${communicationScore}, Code Quality: ${codeQualityScore}, Problem Solving: ${problemSolvingScore}`);
   console.log(`📝 Hiring decision: ${hiringDecision}, Tone: ${feedbackTone}, Include specifics: ${includeSpecifics}`);
   console.log(`💪 Strengths: ${strengths.length}, Weaknesses: ${weaknesses.length}`);
-  console.log(`🔄 Using ${useMock ? 'mock data' : 'OpenAI API'}`);
+  
+  // Always try to use the API as requested by user
+  const shouldUseMock = false; // Never use mock data
+  if (!isApiKeyAvailable) {
+    console.warn('⚠️ OpenAI API key not found. Please add your API key to the environment variables for feedback generation.');
+  }
+  
+  console.log(`🔄 Using ${shouldUseMock ? 'mock data' : 'OpenAI API'}`);
   
   const startTime = performance.now();
   const input = createFeedbackInput({ 
@@ -277,7 +287,7 @@ export async function generateFeedback({
 
   try {
     console.log(`⏳ Starting feedback generation process...`);
-    const result = useMock ? 
+    const result = shouldUseMock ? 
       getMockFeedbackResponse(input) : 
       await runFeedbackGenerator(input);
     

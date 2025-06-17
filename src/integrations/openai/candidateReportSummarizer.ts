@@ -38,6 +38,10 @@ export interface CandidateReport {
 // API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_MODEL = import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini';
+
+// Check if API key is available
+const isApiKeyAvailable = !!OPENAI_API_KEY;
 
 // Candidate report summarizer prompt
 const summarizerPrompt = ({ 
@@ -116,6 +120,12 @@ export async function generateCandidateReport({
 }): Promise<CandidateReport> {
   console.log('🚀 Generating candidate summary report...');
   
+  // Always try to use the API as requested by user
+  const shouldUseMock = false; // Never use mock data
+  if (!isApiKeyAvailable) {
+    console.warn('⚠️ OpenAI API key not found. Please add your API key to the environment variables for candidate report generation.');
+  }
+  
   try {
     // If we don't have code analysis results, run the analysis
     let codeAnalysis = codeAnalysisResults;
@@ -125,7 +135,7 @@ export async function generateCandidateReport({
         language,
         problemStatement,
         roleLevel,
-        useMock
+        useMock: shouldUseMock
       });
     }
     
@@ -137,12 +147,12 @@ export async function generateCandidateReport({
         transcript,
         problemStatement,
         roleLevel,
-        useMock
+        useMock: shouldUseMock
       });
     }
     
     // If using mock data, return a mock report
-    if (useMock) {
+    if (shouldUseMock) {
       console.log('🔄 Using mock response for candidate report');
       return getMockCandidateReport();
     }
@@ -157,7 +167,7 @@ export async function generateCandidateReport({
     const response = await axios.post(
       OPENAI_API_URL,
       {
-        model: 'gpt-4o',
+        model: OPENAI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: 'json_object' }

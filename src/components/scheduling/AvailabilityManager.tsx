@@ -87,7 +87,8 @@ const AvailabilityManager = () => {
         // Determine status
         let status: 'available' | 'busy' | 'partial' = 'available';
         if (conflicts > 0) {
-          status = 'busy';
+          // Instead of marking as busy, we'll mark as partial if they have some conflicts
+          status = 'partial';
         } else if (availableHours < 10) { // Arbitrary threshold
           status = 'partial';
         }

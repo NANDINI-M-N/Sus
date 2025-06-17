@@ -41,6 +41,10 @@ export interface AnalysisResponse {
 // OpenAI API configuration
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_MODEL = import.meta.env.VITE_OPENAI_MODEL || 'gpt-4o-mini';
+
+// Check if API key is available
+const isApiKeyAvailable = !!OPENAI_API_KEY;
 
 // === Core Shared Input ===
 function createCommonInput({ code, language, problemStatement, roleLevel }: { 
@@ -277,7 +281,7 @@ async function runAgent(agentName: string, input: any): Promise<any> {
     const response = await axios.post(
       OPENAI_API_URL,
       {
-        model: 'gpt-4o',
+        model: OPENAI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: 'json_object' }
@@ -307,11 +311,31 @@ async function runAgent(agentName: string, input: any): Promise<any> {
     }
   } catch (error) {
     console.error(`Error running ${agentName} agent:`, error);
+    let errorMessage = `Error running ${agentName} analysis`;
+    let recommendations = [`The ${agentName} agent encountered an error`];
+    
+    // Add more specific error info
+    if (error.response) {
+      const status = error.response.status;
+      if (status === 401 || status === 403) {
+        errorMessage = `Authentication error: Invalid or missing API key`;
+        recommendations = [`Check your OpenAI API key configuration`];
+      } else if (status === 400) {
+        errorMessage = `Bad request: ${error.response.data?.error?.message || 'Unknown error'}`;
+      } else if (status === 429) {
+        errorMessage = `Rate limit exceeded or insufficient quota`;
+        recommendations = [`Check your OpenAI API usage limits`];
+      }
+    } else if (error.request) {
+      errorMessage = `Network error: No response received from OpenAI API`;
+      recommendations = [`Check your internet connection`];
+    }
+    
     return {
       score: 0,
       issues: [],
-      summary: `Error running ${agentName} analysis`,
-      recommendations: [`The ${agentName} agent encountered an error`]
+      summary: errorMessage,
+      recommendations: recommendations
     };
   }
 }
@@ -424,6 +448,16 @@ export async function analyzeCode({
   console.log(`📝 Problem statement: ${problemStatement || 'None provided'}`);
   console.log(`👤 Role level: ${roleLevel}`);
   
+  // Always try to use the API as requested by user
+  const shouldUseMock = false; // Never use mock data
+  if (!isApiKeyAvailable) {
+    console.warn('⚠️ OpenAI API key not found. Please add your API key to the environment variables.');
+    console.error('🔑 To set up your OpenAI API key:');
+    console.error('1. Create a .env file in the root directory');
+    console.error('2. Add the following line: VITE_OPENAI_API_KEY=your_actual_api_key_here');
+    console.error('3. Restart the application');
+  }
+  
   const startTime = performance.now();
   const input = createCommonInput({ code, language, problemStatement, roleLevel });
 
@@ -431,7 +465,7 @@ export async function analyzeCode({
   const agentNames = ['correctness', 'complexity', 'edgeCases', 'performance', 'security', 'style'];
   
   const agentPromises = agentNames.map(agent => {
-    return useMock ? 
+    return shouldUseMock ? 
       Promise.resolve({ agent, output: getMockResponse(agent) }) : 
       runAgent(agent, input).then(output => ({ agent, output }));
   });
@@ -455,7 +489,7 @@ export async function analyzeCode({
       problemStatement: problemStatement || 'No problem statement provided',
     };
     
-    const overallSummary = useMock ? 
+    const overallSummary = shouldUseMock ? 
       getMockResponse('summarizer') : 
       await runAgent('summarizer', summaryInput);
     

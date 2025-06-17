@@ -185,10 +185,10 @@ const CodeQualityAnalysis: React.FC<CodeQualityAnalysisProps> = ({
       
       setOverallSummary({
         score: result.overallSummary.score,
-        strengths: result.overallSummary.strengths,
-        weaknesses: result.overallSummary.weaknesses,
-        hiringRecommendation: result.overallSummary.hiringRecommendation,
-        summary: result.overallSummary.summary
+        strengths: result.overallSummary.strengths || [],
+        weaknesses: result.overallSummary.weaknesses || [],
+        hiringRecommendation: result.overallSummary.hiringRecommendation || '',
+        summary: result.overallSummary.summary || ''
       });
       
       setIsAnalyzing(false);
@@ -199,680 +199,693 @@ const CodeQualityAnalysis: React.FC<CodeQualityAnalysisProps> = ({
       }
       
     } catch (error) {
-      console.error('❌ Error during code quality analysis:', error);
+      console.error('❌ Error during code analysis:', error);
+      setIsAnalyzing(false);
       
-      // Reset loading states
+      // Reset loading states on error
       setCorrectnessAnalysis(prev => ({ ...prev, loading: false }));
       setComplexityAnalysis(prev => ({ ...prev, loading: false }));
       setEdgeCaseAnalysis(prev => ({ ...prev, loading: false }));
       setPerformanceAnalysis(prev => ({ ...prev, loading: false }));
       setSecurityAnalysis(prev => ({ ...prev, loading: false }));
       setStyleAnalysis(prev => ({ ...prev, loading: false }));
-      
-      setIsAnalyzing(false);
     }
   };
 
+  // Utility functions for UI display
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-tech-green';
     if (score >= 60) return 'text-yellow-400';
     return 'text-red-400';
   };
-
+  
   const getScoreBackground = (score: number) => {
-    if (score >= 80) return 'bg-tech-green/20';
-    if (score >= 60) return 'bg-yellow-400/20';
-    return 'bg-red-400/20';
+    if (score >= 80) return 'bg-tech-green';
+    if (score >= 60) return 'bg-yellow-400';
+    return 'bg-red-400';
   };
-
+  
   const getSeverityColor = (severity?: string) => {
     switch (severity) {
       case 'critical': return 'text-red-400';
       case 'major': return 'text-orange-400';
       case 'minor': return 'text-yellow-400';
       case 'info': return 'text-blue-400';
-      default: return 'text-gray-400';
+      default: return 'text-white';
     }
   };
-
+  
   const getSeverityBadge = (severity?: string) => {
     switch (severity) {
       case 'critical':
-        return <Badge variant="outline" className="border-red-400 text-red-400">Critical</Badge>;
+        return <Badge variant="destructive">Critical</Badge>;
       case 'major':
-        return <Badge variant="outline" className="border-orange-400 text-orange-400">Major</Badge>;
+        return <Badge variant="destructive" className="bg-orange-600">Major</Badge>;
       case 'minor':
-        return <Badge variant="outline" className="border-yellow-400 text-yellow-400">Minor</Badge>;
+        return <Badge variant="outline" className="text-yellow-400 border-yellow-400">Minor</Badge>;
       case 'info':
-        return <Badge variant="outline" className="border-blue-400 text-blue-400">Info</Badge>;
+        return <Badge variant="outline" className="text-blue-400 border-blue-400">Info</Badge>;
       default:
-        return <Badge variant="outline" className="border-gray-400 text-gray-400">Unknown</Badge>;
+        return null;
     }
   };
-
+  
   return (
-    <div className="h-full flex flex-col" data-code-quality-analysis>
-      <div className="bg-dark-secondary border-b border-border-dark p-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <Code2 className="w-5 h-5 text-tech-green mr-2" />
-          <h2 className="text-white text-base font-medium">Code Quality Analysis</h2>
-        </div>
+    <div className="h-full flex flex-col">
+      <div className="border-b border-border p-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          {lastAnalysisTime && (
-            <span className="text-text-secondary text-xs mr-2">
-              Last updated: {lastAnalysisTime.toLocaleTimeString()}
-            </span>
-          )}
-          <Button 
-            variant="default" 
-            size="sm" 
-            onClick={runAnalysis}
-            disabled={isAnalyzing}
-            className="bg-tech-green hover:bg-tech-green/80 text-dark-primary"
-            data-analyze-button
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Analyze Code
-              </>
-            )}
-          </Button>
+          <Code2 className="w-5 h-5 text-tech-green" />
+          <h2 className="text-lg font-medium text-white">Code Quality Analysis</h2>
         </div>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={runAnalysis}
+          disabled={isAnalyzing || !code}
+          className="flex items-center space-x-1"
+        >
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Analyze Code
+            </>
+          )}
+        </Button>
       </div>
       
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="summary" className="h-full flex flex-col">
-          <TabsList className="bg-dark-primary px-4 py-2 border-b border-border-dark justify-start">
-            <TabsTrigger value="summary" className="text-white">Summary</TabsTrigger>
-            <TabsTrigger value="correctness" className="text-white">Correctness</TabsTrigger>
-            <TabsTrigger value="complexity" className="text-white">Complexity</TabsTrigger>
-            <TabsTrigger value="edge-cases" className="text-white">Edge Cases</TabsTrigger>
-            <TabsTrigger value="performance" className="text-white">Performance</TabsTrigger>
-            <TabsTrigger value="security" className="text-white">Security</TabsTrigger>
-            <TabsTrigger value="style" className="text-white">Style</TabsTrigger>
+      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="border-b border-border">
+          <TabsList className="h-12 bg-transparent p-0 w-full flex justify-start">
+            <TabsTrigger value="summary" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Summary
+            </TabsTrigger>
+            <TabsTrigger value="correctness" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Correctness
+            </TabsTrigger>
+            <TabsTrigger value="complexity" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Complexity
+            </TabsTrigger>
+            <TabsTrigger value="edge-cases" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Edge Cases
+            </TabsTrigger>
+            <TabsTrigger value="performance" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Performance
+            </TabsTrigger>
+            <TabsTrigger value="security" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="style" className="h-12 px-4 data-[state=active]:text-tech-green">
+              Style
+            </TabsTrigger>
           </TabsList>
-          
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="summary" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {isAnalyzing ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Generating comprehensive analysis...</p>
-                    </div>
-                  ) : lastAnalysisTime ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Overall Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(overallSummary.score)}`}>
-                            {overallSummary.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <CheckCircle className="w-4 h-4 text-tech-green" />
-                            <h4 className="text-white font-medium">Correctness</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(correctnessAnalysis.score)}`}>
-                              {correctnessAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={correctnessAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(correctnessAnalysis.score)}`} 
-                          />
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Layers className="w-4 h-4 text-blue-400" />
-                            <h4 className="text-white font-medium">Complexity</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(complexityAnalysis.score)}`}>
-                              {complexityAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={complexityAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(complexityAnalysis.score)}`} 
-                          />
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                            <h4 className="text-white font-medium">Edge Cases</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(edgeCaseAnalysis.score)}`}>
-                              {edgeCaseAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={edgeCaseAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(edgeCaseAnalysis.score)}`} 
-                          />
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Zap className="w-4 h-4 text-purple-400" />
-                            <h4 className="text-white font-medium">Performance</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(performanceAnalysis.score)}`}>
-                              {performanceAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={performanceAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(performanceAnalysis.score)}`} 
-                          />
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Shield className="w-4 h-4 text-red-400" />
-                            <h4 className="text-white font-medium">Security</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(securityAnalysis.score)}`}>
-                              {securityAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={securityAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(securityAnalysis.score)}`} 
-                          />
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Eye className="w-4 h-4 text-orange-400" />
-                            <h4 className="text-white font-medium">Style</h4>
-                          </div>
-                          <div className="flex items-center">
-                            <span className={`text-2xl font-bold ${getScoreColor(styleAnalysis.score)}`}>
-                              {styleAnalysis.score}
-                            </span>
-                            <span className="text-text-secondary text-sm ml-1">/100</span>
-                          </div>
-                          <Progress 
-                            value={styleAnalysis.score} 
-                            className={`h-2 ${getScoreBackground(styleAnalysis.score)}`} 
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4 mt-6">
-                        <div>
-                          <h3 className="text-white font-medium mb-2">Key Strengths</h3>
-                          <ul className="list-disc list-inside space-y-1">
-                            {overallSummary.strengths.map((strength, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{strength}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-white font-medium mb-2">Areas for Improvement</h3>
-                          <ul className="list-disc list-inside space-y-1">
-                            {overallSummary.weaknesses.map((weakness, i) => (
-                              <li key={i} className="text-red-400 text-sm">
-                                <span className="text-white">{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-white font-medium mb-2">Summary</h3>
-                          <p className="text-text-secondary">{overallSummary.summary}</p>
-                        </div>
-                        
-                        <div className="bg-dark-primary p-4 rounded-md">
-                          <h3 className="text-white font-medium mb-2">Hiring Recommendation</h3>
-                          <p className="text-tech-green font-medium">{overallSummary.hiringRecommendation}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <FileCode className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">Click "Analyze Code" to start code quality analysis</p>
-                    </div>
-                  )}
+        </div>
+        
+        <TabsContent value="summary" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {isAnalyzing ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code quality...</p>
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="correctness" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {correctnessAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing code correctness...</p>
+              ) : overallSummary.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Overall Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(overallSummary.score)}`}>
+                        {overallSummary.score}/100
+                      </span>
                     </div>
-                  ) : correctnessAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Correctness Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(correctnessAnalysis.score)}`}>
-                            {correctnessAnalysis.score}/100
-                          </span>
-                        </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <CheckCircle className="w-4 h-4 text-tech-green" />
+                        <h4 className="text-white font-medium">Correctness</h4>
                       </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{correctnessAnalysis.summary}</p>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(correctnessAnalysis.score)}`}>
+                          {correctnessAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
                       </div>
-                      
-                      {correctnessAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {correctnessAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`${getSeverityColor(issue.severity)}`}>
-                                      {issue.line ? `Line ${issue.line}:` : ''}
-                                    </span>
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                      <Progress 
+                        value={correctnessAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(correctnessAnalysis.score)}`} 
+                      />
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Layers className="w-4 h-4 text-blue-400" />
+                        <h4 className="text-white font-medium">Complexity</h4>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(complexityAnalysis.score)}`}>
+                          {complexityAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
+                      </div>
+                      <Progress 
+                        value={complexityAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(complexityAnalysis.score)}`} 
+                      />
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                        <h4 className="text-white font-medium">Edge Cases</h4>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(edgeCaseAnalysis.score)}`}>
+                          {edgeCaseAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
+                      </div>
+                      <Progress 
+                        value={edgeCaseAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(edgeCaseAnalysis.score)}`} 
+                      />
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Zap className="w-4 h-4 text-purple-400" />
+                        <h4 className="text-white font-medium">Performance</h4>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(performanceAnalysis.score)}`}>
+                          {performanceAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
+                      </div>
+                      <Progress 
+                        value={performanceAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(performanceAnalysis.score)}`} 
+                      />
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Shield className="w-4 h-4 text-red-400" />
+                        <h4 className="text-white font-medium">Security</h4>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(securityAnalysis.score)}`}>
+                          {securityAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
+                      </div>
+                      <Progress 
+                        value={securityAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(securityAnalysis.score)}`} 
+                      />
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Eye className="w-4 h-4 text-orange-400" />
+                        <h4 className="text-white font-medium">Style</h4>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-2xl font-bold ${getScoreColor(styleAnalysis.score)}`}>
+                          {styleAnalysis.score}
+                        </span>
+                        <span className="text-text-secondary text-sm ml-1">/100</span>
+                      </div>
+                      <Progress 
+                        value={styleAnalysis.score} 
+                        className={`h-2 ${getScoreBackground(styleAnalysis.score)}`} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 mt-6">
+                    <div>
+                      <h3 className="text-white font-medium mb-2">Key Strengths</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {overallSummary.strengths && overallSummary.strengths.length > 0 ? (
+                          overallSummary.strengths.map((strength, i) => (
+                            <li key={i} className="text-tech-green text-sm">
+                              <span className="text-white">{strength}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-text-secondary">No strengths identified yet</li>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-white font-medium mb-2">Areas for Improvement</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {overallSummary.weaknesses && overallSummary.weaknesses.length > 0 ? (
+                          overallSummary.weaknesses.map((weakness, i) => (
+                            <li key={i} className="text-red-400 text-sm">
+                              <span className="text-white">{weakness}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-text-secondary">No areas for improvement identified yet</li>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-white font-medium mb-2">Summary</h3>
+                      <p className="text-text-secondary">{overallSummary.summary || 'No summary available'}</p>
+                    </div>
+                    
+                    <div className="bg-dark-primary p-4 rounded-md">
+                      <h3 className="text-white font-medium mb-2">Hiring Recommendation</h3>
+                      <p className="text-tech-green font-medium">{overallSummary.hiringRecommendation || 'No recommendation available'}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <FileCode className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">Click "Analyze Code" to start code quality analysis</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="correctness" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {correctnessAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code correctness...</p>
+                </div>
+              ) : correctnessAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Correctness Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(correctnessAnalysis.score)}`}>
+                        {correctnessAnalysis.score}/100
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{correctnessAnalysis.summary}</p>
+                  </div>
+                  
+                  {correctnessAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {correctnessAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`${getSeverityColor(issue.severity)}`}>
+                                  {issue.line ? `Line ${issue.line}:` : ''}
+                                </span>
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {correctnessAnalysis.recommendations && correctnessAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {correctnessAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <CheckCircle className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No correctness analysis available</p>
+                  )}
+                  
+                  {correctnessAnalysis.recommendations && correctnessAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {correctnessAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="complexity" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {complexityAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing code complexity...</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <CheckCircle className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No correctness analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="complexity" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {complexityAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code complexity...</p>
+                </div>
+              ) : complexityAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Complexity Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(complexityAnalysis.score)}`}>
+                        {complexityAnalysis.score}/100
+                      </span>
                     </div>
-                  ) : complexityAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Complexity Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(complexityAnalysis.score)}`}>
-                            {complexityAnalysis.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{complexityAnalysis.summary}</p>
-                      </div>
-                      
-                      {complexityAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {complexityAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`${getSeverityColor(issue.severity)}`}>
-                                      {issue.line ? `Line ${issue.line}:` : ''}
-                                    </span>
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{complexityAnalysis.summary}</p>
+                  </div>
+                  
+                  {complexityAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {complexityAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`${getSeverityColor(issue.severity)}`}>
+                                  {issue.line ? `Line ${issue.line}:` : ''}
+                                </span>
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {complexityAnalysis.recommendations && complexityAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {complexityAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Layers className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No complexity analysis available</p>
+                  )}
+                  
+                  {complexityAnalysis.recommendations && complexityAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {complexityAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="edge-cases" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {edgeCaseAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing edge cases...</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Layers className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No complexity analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="edge-cases" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {edgeCaseAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing edge cases...</p>
+                </div>
+              ) : edgeCaseAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Edge Case Handling Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(edgeCaseAnalysis.score)}`}>
+                        {edgeCaseAnalysis.score}/100
+                      </span>
                     </div>
-                  ) : edgeCaseAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Edge Case Handling Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(edgeCaseAnalysis.score)}`}>
-                            {edgeCaseAnalysis.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{edgeCaseAnalysis.summary}</p>
-                      </div>
-                      
-                      {edgeCaseAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {edgeCaseAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{edgeCaseAnalysis.summary}</p>
+                  </div>
+                  
+                  {edgeCaseAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {edgeCaseAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {edgeCaseAnalysis.recommendations && edgeCaseAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {edgeCaseAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <AlertTriangle className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No edge case analysis available</p>
+                  )}
+                  
+                  {edgeCaseAnalysis.recommendations && edgeCaseAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {edgeCaseAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="performance" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {performanceAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing code performance...</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <AlertTriangle className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No edge case analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="performance" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {performanceAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code performance...</p>
+                </div>
+              ) : performanceAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Performance Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(performanceAnalysis.score)}`}>
+                        {performanceAnalysis.score}/100
+                      </span>
                     </div>
-                  ) : performanceAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Performance Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(performanceAnalysis.score)}`}>
-                            {performanceAnalysis.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{performanceAnalysis.summary}</p>
-                      </div>
-                      
-                      {performanceAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {performanceAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`${getSeverityColor(issue.severity)}`}>
-                                      {issue.line ? `Line ${issue.line}:` : ''}
-                                    </span>
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{performanceAnalysis.summary}</p>
+                  </div>
+                  
+                  {performanceAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {performanceAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`${getSeverityColor(issue.severity)}`}>
+                                  {issue.line ? `Line ${issue.line}:` : ''}
+                                </span>
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {performanceAnalysis.recommendations && performanceAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {performanceAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Zap className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No performance analysis available</p>
+                  )}
+                  
+                  {performanceAnalysis.recommendations && performanceAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {performanceAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="security" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {securityAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing code security...</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Zap className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No performance analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="security" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {securityAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code security...</p>
+                </div>
+              ) : securityAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Security Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(securityAnalysis.score)}`}>
+                        {securityAnalysis.score}/100
+                      </span>
                     </div>
-                  ) : securityAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Security Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(securityAnalysis.score)}`}>
-                            {securityAnalysis.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{securityAnalysis.summary}</p>
-                      </div>
-                      
-                      {securityAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {securityAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`${getSeverityColor(issue.severity)}`}>
-                                      {issue.line ? `Line ${issue.line}:` : ''}
-                                    </span>
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{securityAnalysis.summary}</p>
+                  </div>
+                  
+                  {securityAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {securityAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`${getSeverityColor(issue.severity)}`}>
+                                  {issue.line ? `Line ${issue.line}:` : ''}
+                                </span>
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {securityAnalysis.recommendations && securityAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {securityAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Shield className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No security analysis available</p>
+                  )}
+                  
+                  {securityAnalysis.recommendations && securityAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {securityAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="style" className="m-0 p-0 h-full">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  {styleAnalysis.loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
-                      <p className="text-text-secondary">Analyzing code style...</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Shield className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No security analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="style" className="m-0 p-0 h-full">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              {styleAnalysis.loading ? (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Loader2 className="w-12 h-12 text-tech-green animate-spin" />
+                  <p className="text-text-secondary">Analyzing code style...</p>
+                </div>
+              ) : styleAnalysis.score > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-white text-xl font-semibold">Style & Readability Score</h3>
+                    <div className="flex items-center">
+                      <span className={`text-3xl font-bold ${getScoreColor(styleAnalysis.score)}`}>
+                        {styleAnalysis.score}/100
+                      </span>
                     </div>
-                  ) : styleAnalysis.score > 0 ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-white text-xl font-semibold">Style & Readability Score</h3>
-                        <div className="flex items-center">
-                          <span className={`text-3xl font-bold ${getScoreColor(styleAnalysis.score)}`}>
-                            {styleAnalysis.score}/100
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-white font-medium mb-3">Summary</h4>
-                        <p className="text-text-secondary">{styleAnalysis.summary}</p>
-                      </div>
-                      
-                      {styleAnalysis.issues.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Issues Found</h4>
-                          <div className="space-y-3">
-                            {styleAnalysis.issues.map((issue, i) => (
-                              <div key={i} className="bg-dark-primary p-3 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`${getSeverityColor(issue.severity)}`}>
-                                      {issue.line ? `Line ${issue.line}:` : ''}
-                                    </span>
-                                    <span className="text-white">{issue.description}</span>
-                                  </div>
-                                  {getSeverityBadge(issue.severity)}
-                                </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-white font-medium mb-3">Summary</h4>
+                    <p className="text-text-secondary">{styleAnalysis.summary}</p>
+                  </div>
+                  
+                  {styleAnalysis.issues.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Issues Found</h4>
+                      <div className="space-y-3">
+                        {styleAnalysis.issues.map((issue, i) => (
+                          <div key={i} className="bg-dark-primary p-3 rounded-md">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className={`${getSeverityColor(issue.severity)}`}>
+                                  {issue.line ? `Line ${issue.line}:` : ''}
+                                </span>
+                                <span className="text-white">{issue.description}</span>
                               </div>
-                            ))}
+                              {getSeverityBadge(issue.severity)}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {styleAnalysis.recommendations && styleAnalysis.recommendations.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">Recommendations</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {styleAnalysis.recommendations.map((rec, i) => (
-                              <li key={i} className="text-tech-green text-sm">
-                                <span className="text-white">{rec}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                      <Eye className="w-12 h-12 text-text-secondary" />
-                      <p className="text-text-secondary">No style analysis available</p>
+                  )}
+                  
+                  {styleAnalysis.recommendations && styleAnalysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-white font-medium mb-3">Recommendations</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {styleAnalysis.recommendations.map((rec, i) => (
+                          <li key={i} className="text-tech-green text-sm">
+                            <span className="text-white">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </TabsContent>
-          </div>
-        </Tabs>
-      </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                  <Eye className="w-12 h-12 text-text-secondary" />
+                  <p className="text-text-secondary">No style analysis available</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

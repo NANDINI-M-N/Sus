@@ -31,6 +31,7 @@ interface Interviewer {
   last_name: string | null;
   role: string;
   available: boolean;
+  concurrentInterviews: number;
 }
 
 interface Template {
@@ -58,31 +59,27 @@ const SchedulingWizard = ({ onClose }: Props) => {
     interviewer: '',
     date: '',
     time: '',
-    template: '',
     position: ''
   });
 
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [candidateSearch, setCandidateSearch] = useState('');
   const [loading, setLoading] = useState({
     candidates: true,
     interviewers: true,
-    templates: true,
     positions: true
   });
 
   const { toast } = useToast();
   const { createInterview } = useInterviews();
   const { user } = useAuth();
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   useEffect(() => {
     fetchCandidates();
     fetchInterviewers();
-    fetchTemplates();
     fetchPositions();
   }, []);
 
@@ -121,14 +118,29 @@ const SchedulingWizard = ({ onClose }: Props) => {
         .from('user_availability')
         .select('user_id, is_active');
       
+      // Get current interviews for each interviewer
+      const { data: currentInterviews } = await supabase
+        .from('interviews')
+        .select('recruiter_id, scheduled_at, duration_minutes')
+        .eq('status', 'scheduled')
+        .gte('scheduled_at', new Date().toISOString());
+      
       const availabilityMap = new Map();
       availabilityData?.forEach(item => {
         availabilityMap.set(item.user_id, item.is_active);
       });
       
+      // Count concurrent interviews for each interviewer
+      const concurrentInterviewsMap = new Map();
+      currentInterviews?.forEach(interview => {
+        const count = concurrentInterviewsMap.get(interview.recruiter_id) || 0;
+        concurrentInterviewsMap.set(interview.recruiter_id, count + 1);
+      });
+      
       const interviewersWithAvailability = data?.map(interviewer => ({
         ...interviewer,
-        available: availabilityMap.get(interviewer.id) || false
+        available: availabilityMap.get(interviewer.id) || false,
+        concurrentInterviews: concurrentInterviewsMap.get(interviewer.id) || 0
       })) || [];
       
       setInterviewers(interviewersWithAvailability);
@@ -141,26 +153,6 @@ const SchedulingWizard = ({ onClose }: Props) => {
       });
     } finally {
       setLoading(prev => ({ ...prev, interviewers: false }));
-    }
-  };
-
-  const fetchTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('interview_templates')
-        .select('*');
-
-      if (error) throw error;
-      setTemplates(data || []);
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load interview templates",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(prev => ({ ...prev, templates: false }));
     }
   };
 
@@ -247,8 +239,7 @@ const SchedulingWizard = ({ onClose }: Props) => {
         description: `${formData.interviewType} interview for ${selectedCandidate.first_name} ${selectedCandidate.last_name}`,
         scheduled_at: scheduledAt.toISOString(),
         duration_minutes: parseInt(formData.duration) || 60,
-        status: 'scheduled' as const,
-        template_id: formData.template || null
+        status: 'scheduled' as const
       };
       
       const { data, error } = await createInterview(interviewData);
@@ -284,7 +275,6 @@ const SchedulingWizard = ({ onClose }: Props) => {
       case 2: return !!formData.interviewType && !!formData.duration;
       case 3: return !!formData.interviewer;
       case 4: return !!formData.date && !!formData.time;
-      case 5: return !!formData.template;
       default: return false;
     }
   };
@@ -435,8 +425,8 @@ const SchedulingWizard = ({ onClose }: Props) => {
                     key={interviewer.id}
                     className={`bg-dark-primary border-border-dark cursor-pointer hover:border-tech-green/50 transition-colors ${
                       formData.interviewer === interviewer.id ? 'border-tech-green' : ''
-                    } ${!interviewer.available ? 'opacity-50' : ''}`}
-                    onClick={() => interviewer.available && setFormData({...formData, interviewer: interviewer.id})}
+                    }`}
+                    onClick={() => setFormData({...formData, interviewer: interviewer.id})}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -451,8 +441,13 @@ const SchedulingWizard = ({ onClose }: Props) => {
                             ? 'bg-tech-green/20 text-tech-green border-tech-green/30' 
                             : 'bg-red-500/20 text-red-400 border-red-500/30'
                           }>
-                            {interviewer.available ? 'Available' : 'Busy'}
+                            {interviewer.available ? 'Available' : 'Unavailable'}
                           </Badge>
+                          {interviewer.concurrentInterviews > 0 && (
+                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                              {interviewer.concurrentInterviews} concurrent
+                            </Badge>
+                          )}
                           <User className="text-tech-green" size={20} />
                         </div>
                       </div>
@@ -488,50 +483,6 @@ const SchedulingWizard = ({ onClose }: Props) => {
                 />
               </div>
             </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-text-primary">Select Template</h3>
-            {loading.templates ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-6 w-6 text-tech-green animate-spin" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {templates.map((template) => (
-                  <Card 
-                    key={template.id}
-                    className={`bg-dark-primary border-border-dark cursor-pointer hover:border-tech-green/50 transition-colors ${
-                      formData.template === template.id ? 'border-tech-green' : ''
-                    }`}
-                    onClick={() => setFormData({...formData, template: template.id})}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-text-primary">{template.name}</h4>
-                          <p className="text-sm text-text-secondary">{template.description || 'No description'}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                              {template.duration_minutes} min
-                            </Badge>
-                            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                              {template.questions ? 
-                                (Array.isArray(template.questions) ? template.questions.length : 'N/A') : 
-                                'N/A'} questions
-                            </Badge>
-                          </div>
-                        </div>
-                        <FileText className="text-tech-green" size={20} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
           </div>
         );
 
@@ -578,7 +529,7 @@ const SchedulingWizard = ({ onClose }: Props) => {
             <div className="relative mt-2">
               <div className="absolute top-0 left-0 right-0 h-1 bg-dark-primary rounded-full"></div>
               <div 
-                className="absolute top-0 left-0 h-1 bg-tech-green rounded-full" 
+                className="absolute top-0 left-0 h-1 bg-tech-green rounded-full transition-all duration-300" 
                 style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
               ></div>
             </div>

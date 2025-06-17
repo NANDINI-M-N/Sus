@@ -105,7 +105,7 @@ Your response MUST be valid JSON with this exact structure:
 }`;
 
     const request: OpenAIRequest = {
-      model: 'gpt-4o',
+      model: 'gpt-4o mini',
       messages: [
         {
           role: 'system',

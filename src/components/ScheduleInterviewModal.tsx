@@ -188,6 +188,19 @@ const ScheduleInterviewModal = ({ onClose }: ScheduleInterviewModalProps) => {
       const [hours, minutes] = interviewDetails.time.split(':').map(Number);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
 
+      // Check for existing interviews at the same time
+      const { data: existingInterviews, error: checkError } = await supabase
+        .from('interviews')
+        .select('id')
+        .eq('recruiter_id', user.id)
+        .eq('status', 'scheduled')
+        .eq('scheduled_at', scheduledDateTime.toISOString());
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      // Allow scheduling even if there are existing interviews
       const interviewData = {
         candidate_id: selectedCandidate.id,
         recruiter_id: user.id,

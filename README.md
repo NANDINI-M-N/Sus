@@ -232,7 +232,7 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # 🤖 OpenAI Configuration
-VITE_OPENAI_API_KEY=your_openai_api_key
+VITE_OPENAI_API_KEY=your_openai_api_key_here
 VITE_OPENAI_MODEL=gpt-4-turbo-preview
 
 # 🎤 Deepgram Configuration (for speech recognition)
@@ -457,3 +457,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 *🔄 Last updated: $(date +'%B %Y') • 📊 Version: 2.0.0 • 🏆 Status: Production Ready*
 
 </div>
+
+## Setting Up OpenAI API Key
+
+This application uses OpenAI's API to power various AI features like code analysis, plagiarism detection, and feedback generation. To use these features, you need to:
+
+1. Create an OpenAI account and get an API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Create a `.env` file in the root directory of the project
+3. Add your API key to the `.env` file:
+
+```
+VITE_OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Without a valid API key, the AI analysis features will not work properly.

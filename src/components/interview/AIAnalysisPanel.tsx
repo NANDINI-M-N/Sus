@@ -24,7 +24,8 @@ import {
   PieChart,
   Code2,
   Loader2,
-  FileSearch
+  FileSearch,
+  Briefcase
 } from 'lucide-react';
 import {
   ChartContainer,
@@ -53,6 +54,7 @@ import {
 import ProblemStatementInput from './ProblemStatementInput';
 import CodeQualityAnalysis from './CodeQualityAnalysis';
 import { useInterview } from '@/contexts/InterviewContext';
+import RecruiterFriendlyReport from './RecruiterFriendlyReport';
 
 interface CodeQualityMetric {
   name: string;
@@ -186,6 +188,28 @@ export const AIAnalysisPanel = forwardRef<AIAnalysisPanelRef, AIAnalysisPanelPro
       { subject: 'Time Management', A: 68, fullMark: 100 },
       { subject: 'Stress Handling', A: 83, fullMark: 100 }
     ];
+    
+    const strengthsWeaknesses = {
+      strengths: [
+        'Strong algorithmic thinking',
+        'Efficient use of data structures',
+        'Good code organization',
+        'Clear variable naming',
+        'Quick to identify optimal solutions'
+      ],
+      weaknesses: [
+        'Limited error handling',
+        'Could improve test coverage',
+        'Some edge cases not considered',
+        'Limited consideration of scalability'
+      ],
+      recommendations: [
+        'Practice writing unit tests for better coverage',
+        'Spend more time on edge case analysis',
+        'Consider scalability implications early',
+        'Add more detailed code comments'
+      ]
+    };
 
     const plagiarismResult: PlagiarismResult = {
       similarity: 23,
@@ -233,27 +257,7 @@ export const AIAnalysisPanel = forwardRef<AIAnalysisPanelRef, AIAnalysisPanelPro
       }
     ];
 
-    const strengthsWeaknesses = {
-      strengths: [
-        'Strong understanding of data structures and algorithms',
-        'Clean and readable code structure',
-        'Good problem-solving approach',
-        'Effective communication during explanation',
-        'Quick to identify optimal solutions'
-      ],
-      weaknesses: [
-        'Could improve test coverage',
-        'Sometimes rushes through edge cases',
-        'Limited consideration of scalability',
-        'Needs to comment code more thoroughly'
-      ],
-      recommendations: [
-        'Practice writing unit tests for better coverage',
-        'Spend more time on edge case analysis',
-        'Consider scalability implications early',
-        'Add more detailed code comments'
-      ]
-    };
+    // Using the first strengthsWeaknesses definition from above
 
     const pieData = [
       { name: 'Correct Solutions', value: 78, color: '#39d353' },
@@ -415,6 +419,10 @@ export const AIAnalysisPanel = forwardRef<AIAnalysisPanelRef, AIAnalysisPanelPro
               <TabsTrigger value="plagiarism" className="text-white data-[state=active]:bg-dark-secondary">
                 <FileSearch className="w-4 h-4 mr-1" />
                 Plagiarism
+              </TabsTrigger>
+              <TabsTrigger value="recruiter" className="text-white data-[state=active]:bg-dark-secondary">
+                <Briefcase className="w-4 h-4 mr-1" />
+                Recruiter
               </TabsTrigger>
               <TabsTrigger value="behavior" className="text-white data-[state=active]:bg-dark-secondary">
                 <Users className="w-4 h-4 mr-1" />
@@ -581,6 +589,14 @@ export const AIAnalysisPanel = forwardRef<AIAnalysisPanelRef, AIAnalysisPanelPro
                   </div>
                 </div>
               </ScrollArea>
+            </TabsContent>
+
+            {/* Recruiter Tab */}
+            <TabsContent value="recruiter" className="flex-1 overflow-hidden p-0 m-0">
+              <RecruiterFriendlyReport 
+                candidateName="Jane Smith"
+                position="Full Stack Developer"
+              />
             </TabsContent>
 
             {/* Behavior Tab */}

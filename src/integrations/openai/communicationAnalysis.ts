@@ -28,6 +28,9 @@ export interface CommunicationAnalysisResult {
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
+// Check if API key is available
+const isApiKeyAvailable = !!OPENAI_API_KEY;
+
 // Communication analysis agent prompt
 const communicationPrompt = ({ 
   messages, 
@@ -91,7 +94,13 @@ export async function analyzeCommunication({
 }): Promise<CommunicationAnalysisResult> {
   console.log('🚀 Starting communication analysis...');
   
-  if (useMock) {
+  // Always try to use the API as requested by user
+  const shouldUseMock = false; // Never use mock data
+  if (!isApiKeyAvailable) {
+    console.warn('⚠️ OpenAI API key not found. Please add your API key to the environment variables for communication analysis.');
+  }
+  
+  if (shouldUseMock) {
     console.log('🔄 Using mock response for communication analysis');
     return getMockCommunicationAnalysis();
   }
@@ -102,7 +111,7 @@ export async function analyzeCommunication({
     const response = await axios.post(
       OPENAI_API_URL,
       {
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: 'json_object' }
