@@ -62,9 +62,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom platform colors
-        "dark-primary": "#0a1f1c",
-        "dark-secondary": "#132c28",
+        // Custom platform colors - Updated to match candidate dashboard
+        "dark-primary": "#0F1521",
+        "dark-secondary": "#1E2533",
         "tech-green": "#00A651",
         "emerald-green": "#00A651",
         "green-light": "#4cd964",
@@ -72,7 +72,7 @@ export default {
         "green-subtle": "#e6f7ef",
         "text-primary": "#ffffff",
         "text-secondary": "#a3b8b4",
-        "border-dark": "#1d3b36",
+        "border-dark": "#2A3548",
         "success": "#00c853",
         "warning": "#ffc107",
         "error": "#ff3b30",

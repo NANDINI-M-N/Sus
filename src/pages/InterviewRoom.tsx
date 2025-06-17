@@ -98,22 +98,22 @@ const InterviewRoom = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-gray-900 flex flex-col">
+    <div className="h-screen w-full bg-dark-primary flex flex-col">
       {/* Header Bar */}
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+      <header className="bg-dark-secondary border-b border-border-dark px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <div className="flex items-center gap-4">
             <BackButton 
               label="Back to Interviews" 
               to="/interviews"
-              className="text-gray-300 hover:text-white"
+              className="text-text-secondary hover:text-white"
             />
-            <div className="h-6 w-px bg-gray-700 mx-2"></div>
+            <div className="h-6 w-px bg-border-dark mx-2"></div>
             <div>
               <h1 className="text-white font-semibold text-lg">
                 {currentInterview?.title || 'Interview Session'}
               </h1>
-              <p className="text-gray-300 text-sm">
+              <p className="text-text-secondary text-sm">
                 {currentInterview?.candidate ? 
                   `${currentInterview.candidate.first_name} ${currentInterview.candidate.last_name}` : 
                   'Candidate'
@@ -125,7 +125,7 @@ const InterviewRoom = () => {
           
           <div className="flex items-center space-x-4">
             {/* Timer */}
-            <div className="flex items-center space-x-2 bg-gray-900 px-3 py-1 rounded">
+            <div className="flex items-center space-x-2 bg-dark-primary px-3 py-1 rounded">
               <Timer className="w-4 h-4 text-emerald-green" />
               <span className="text-white font-mono">{formatTime(elapsedTime)}</span>
             </div>
@@ -133,14 +133,14 @@ const InterviewRoom = () => {
             {/* Status Indicator */}
             <div className="flex items-center space-x-2">
               <Circle className={`w-3 h-3 fill-current ${
-                currentInterview?.status === 'completed' ? 'text-gray-400' : 
+                currentInterview?.status === 'completed' ? 'text-text-secondary' : 
                 currentInterview?.status === 'in_progress' ? 'text-emerald-green' : 
-                'text-yellow-400'
+                'text-warning'
               }`} />
               <span className={`text-sm font-medium ${
-                currentInterview?.status === 'completed' ? 'text-gray-400' : 
+                currentInterview?.status === 'completed' ? 'text-text-secondary' : 
                 currentInterview?.status === 'in_progress' ? 'text-emerald-green' : 
-                'text-yellow-400'
+                'text-warning'
               }`}>
                 {currentInterview?.status === 'completed' ? 'Completed' : 
                  currentInterview?.status === 'in_progress' ? 'Active' : 
@@ -150,8 +150,8 @@ const InterviewRoom = () => {
             
             {/* Participants */}
             <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-gray-300" />
-              <span className="text-gray-300 text-sm">{participantCount} participants</span>
+              <Users className="w-4 h-4 text-text-secondary" />
+              <span className="text-text-secondary text-sm">{participantCount} participants</span>
             </div>
             
             {/* Recording Indicator */}
@@ -167,18 +167,18 @@ const InterviewRoom = () => {
         <div className="flex items-center space-x-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
+              <Button variant="ghost" size="icon" className="text-text-secondary hover:text-white">
                 <Settings className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
-              <DropdownMenuItem className="text-white hover:bg-gray-900">
+            <DropdownMenuContent align="end" className="bg-dark-secondary border-border-dark">
+              <DropdownMenuItem className="text-white hover:bg-dark-primary">
                 Audio Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-white hover:bg-gray-900">
+              <DropdownMenuItem className="text-white hover:bg-dark-primary">
                 Video Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-white hover:bg-gray-900">
+              <DropdownMenuItem className="text-white hover:bg-dark-primary">
                 Recording Settings
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -198,7 +198,7 @@ const InterviewRoom = () => {
       </header>
 
       {/* Main Content Area - 4 Panel Layout */}
-      <div className="flex-1 p-4 bg-gray-900">
+      <div className="flex-1 p-4 bg-dark-primary">
         <ResizablePanelGroup direction="vertical" className="h-full">
           {/* Top Row */}
           <ResizablePanel defaultSize={50} minSize={30}>
@@ -208,7 +208,7 @@ const InterviewRoom = () => {
                 <VideoCallPanel />
               </ResizablePanel>
               
-              <ResizableHandle withHandle className="bg-gray-700 hover:bg-emerald-green/20" />
+              <ResizableHandle withHandle className="bg-border-dark hover:bg-emerald-green/20" />
               
               {/* Code Editor Panel - Top Right */}
               <ResizablePanel defaultSize={50} minSize={25}>
@@ -217,7 +217,7 @@ const InterviewRoom = () => {
             </ResizablePanelGroup>
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-gray-700 hover:bg-emerald-green/20" />
+          <ResizableHandle withHandle className="bg-border-dark hover:bg-emerald-green/20" />
           
           {/* Bottom Row */}
           <ResizablePanel defaultSize={50} minSize={30}>
@@ -227,7 +227,7 @@ const InterviewRoom = () => {
                 <ChatNotesPanel />
               </ResizablePanel>
               
-              <ResizableHandle withHandle className="bg-gray-700 hover:bg-emerald-green/20" />
+              <ResizableHandle withHandle className="bg-border-dark hover:bg-emerald-green/20" />
               
               {/* AI Analysis Panel - Bottom Right */}
               <ResizablePanel defaultSize={50} minSize={25}>
