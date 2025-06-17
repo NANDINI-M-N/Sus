@@ -16,7 +16,7 @@ const ServerError = () => {
   };
 
   const handleContactSupport = () => {
-    window.open("mailto:support@codeinterview.com?subject=Server Error Report", "_blank");
+    window.open("mailto:support@codesignal.com?subject=Server Error Report", "_blank");
   };
 
   return (

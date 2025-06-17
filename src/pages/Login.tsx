@@ -70,7 +70,7 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-300">Sign in to your Code Interview account</p>
+          <p className="text-gray-300">Sign in to your CodeSignal account</p>
         </div>
 
         <Card className="bg-gray-800 border-gray-700">

@@ -27,7 +27,7 @@ const SocialProof = () => {
   // Testimonials with more detailed information
   const testimonials = [
     {
-      quote: "CodeInterview Pro transformed our hiring process. We reduced time-to-hire by 40% while significantly improving the quality of our technical assessments.",
+      quote: "CodeSignal transformed our hiring process. We reduced time-to-hire by 40% while significantly improving the quality of our technical assessments.",
       author: "Sarah Mitchell",
       position: "VP Engineering",
       company: "TechCorp",

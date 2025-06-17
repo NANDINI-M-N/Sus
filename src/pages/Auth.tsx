@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,8 +53,10 @@ const Auth = () => {
     <div className="min-h-screen bg-dark-primary flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2 mb-8 justify-center">
-          <Code className="h-8 w-8 text-tech-green" />
-          <span className="text-2xl font-bold text-text-primary">Code Interview</span>
+          <div className="w-10 h-10 bg-tech-green rounded-md flex items-center justify-center">
+            <Code className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-2xl font-bold text-text-primary">CodeSignal</span>
         </div>
 
         <Card className="bg-dark-secondary border-border-dark">

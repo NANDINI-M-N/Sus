@@ -139,7 +139,7 @@ const ConfigurationManagement = () => {
                 <Label htmlFor="platform_name" className="text-text-primary">Platform Name</Label>
                 <Input 
                   id="platform_name" 
-                  defaultValue="CodeInterview Pro" 
+                  defaultValue="CodeSignal" 
                   className="mt-1 bg-dark-primary border-border-dark text-text-primary"
                   onChange={() => setUnsavedChanges(true)}
                 />
@@ -148,7 +148,7 @@ const ConfigurationManagement = () => {
                 <Label htmlFor="support_email" className="text-text-primary">Support Email</Label>
                 <Input 
                   id="support_email" 
-                  defaultValue="support@codeinterview.pro" 
+                  defaultValue="support@codesignal.com" 
                   className="mt-1 bg-dark-primary border-border-dark text-text-primary"
                   onChange={() => setUnsavedChanges(true)}
                 />
@@ -192,7 +192,7 @@ const ConfigurationManagement = () => {
                 <Label htmlFor="privacy_policy" className="text-text-primary">Privacy Policy URL</Label>
                 <Input 
                   id="privacy_policy" 
-                  defaultValue="https://codeinterview.pro/privacy" 
+                  defaultValue="https://codesignal.com/privacy" 
                   className="mt-1 bg-dark-primary border-border-dark text-text-primary"
                   onChange={() => setUnsavedChanges(true)}
                 />

@@ -62,7 +62,7 @@ const AdminDashboard = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-300 mt-2">Manage your CodeInterview Pro platform</p>
+            <p className="text-gray-300 mt-2">Manage your CodeSignal platform</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">

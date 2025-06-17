@@ -285,7 +285,10 @@ const RecruiterDashboard = () => {
               <div className="w-9 h-9 bg-emerald-green rounded-lg flex items-center justify-center">
                 <Code className="h-5 w-5 text-dark-primary" />
               </div>
-              <span className="text-xl font-bold text-text-primary hidden md:block">CodeInterview</span>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-6 w-6 text-tech-green" />
+                <span className="text-xl font-bold text-text-primary hidden md:block">CodeSignal</span>
+              </div>
             </div>
             
             {/* Desktop Navigation */}

@@ -27,7 +27,7 @@ export const ScreenShareModal: React.FC<ScreenShareModalProps> = ({
     { id: 'screen-1', type: 'screen', title: 'Entire Screen', preview: 'Desktop' },
     { id: 'window-1', type: 'window', title: 'VS Code', preview: 'Visual Studio Code' },
     { id: 'window-2', type: 'window', title: 'Terminal', preview: 'Terminal Window' },
-    { id: 'tab-1', type: 'tab', title: 'Code Interview Tab', preview: 'codeinterview.com' },
+    { id: 'tab-1', type: 'tab', title: 'CodeSignal Tab', preview: 'codesignal.com' },
     { id: 'tab-2', type: 'tab', title: 'Documentation', preview: 'docs.example.com' },
   ];
 

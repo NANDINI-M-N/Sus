@@ -8,7 +8,7 @@ import {
   User,
   LogOut,
   Bell,
-  Code
+  Code2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -45,9 +45,9 @@ const CandidateNavbar = () => {
         {/* Logo */}
         <div className="flex items-center">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-2 shadow-lg">
-            <Code className="h-5 w-5 text-emerald-green" />
+            <Code2 className="h-5 w-5 text-emerald-green" />
           </div>
-          <span className="text-white font-bold text-lg">CodeInterview Pro</span>
+          <span className="text-white font-bold text-lg">CodeSignal</span>
         </div>
 
         {/* Navigation */}

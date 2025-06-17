@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
+import { Code2 } from 'lucide-react';
 
 interface NavLayoutProps {
   children?: React.ReactNode;
@@ -21,7 +22,12 @@ const NavLayout: React.FC<NavLayoutProps> = ({ children }) => {
         <header className="md:hidden bg-dark-secondary border-b border-border-dark px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MobileNav />
-            <span className="text-white text-lg font-semibold">CodeInterview Pro</span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-tech-green rounded-md flex items-center justify-center">
+                <Code2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white text-lg font-semibold">CodeSignal</span>
+            </div>
           </div>
         </header>
         

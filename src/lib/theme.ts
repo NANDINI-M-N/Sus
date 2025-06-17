@@ -1,5 +1,5 @@
 /**
- * Theme configuration for the CodeInterview Pro application
+ * Theme configuration for the CodeSignal application
  * This file defines the color palette used throughout the application
  */
 

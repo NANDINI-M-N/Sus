@@ -133,7 +133,7 @@ const Register = () => {
       
       toast({
         title: 'Registration successful',
-        description: 'Welcome to CodeInterview Pro!',
+        description: 'Welcome to CodeSignal!',
       });
       
       navigate(`/${formData.role}-dashboard`);
@@ -364,7 +364,7 @@ const Register = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-300">Join CodeInterview Pro today</p>
+          <p className="text-gray-300">Join CodeSignal today</p>
         </div>
 
         <Card className="bg-gray-800 border-gray-700">
